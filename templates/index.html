@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DrawDrop with Gemini</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0d0d0d;
+      color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      color: #00ffaa;
+    }
+    #video-container {
+      box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    #video-feed {
+      border-radius: 12px;
+      width: 720px;
+      height: 540px;
+      object-fit: cover;
+    }
+    #guess-box, #guessing, #feedback {
+      margin-top: 1.5rem;
+      font-size: 1.3rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      max-width: 720px;
+    }
+    #guess-box {
+      background-color: #1a1a1a;
+      border-left: 6px solid #00ffaa;
+      color: #00ffaa;
+    }
+    #guessing {
+      display: none;
+      background-color: #333300;
+      border-left: 6px solid #ffcc00;
+      color: #ffcc00;
+      animation: blink 1s infinite;
+    }
+    #feedback {
+      background-color: #222;
+      border-left: 6px solid #444;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    @media (max-width: 768px) {
+      #video-feed {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>✍️ DrawDrop</h1>
+
+  <div id="video-container">
+    <img src="{{ url_for('video') }}" id="video-feed" />
+  </div>
+
+  <div id="guess-box">✌️ Show peace sign to guess...</div>
+  <div id="guessing">🤖 Gemini is guessing...</div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on('drawing_state', data => {
+      const box = document.getElementById('guess-box');
+      if (data.is_eraser) {
+        box.textContent = '🧽 Erasing...';
+        box.style.color = '#ffcc00';
+      } else if (data.is_drawing) {
+        box.textContent = '✍️ Drawing...';
+        box.style.color = '#0af';
+      } else {
+        box.textContent = '✌️ Show peace sign to guess...';
+        box.style.color = '#00ffaa';
+      }
+    });
+
+    socket.on('guessing', data => {
+        console.log('guessing', data);
+        const guessing = document.getElementById('guessing');
+        guessing.style.display = data.is_guessing = 'block';
+    });
+
+    socket.on('guess_result', data => {
+        console.log('guess_result', data);
+      const guessing = document.getElementById('guessing');
+      guessing.style.display = 'block';
+      guessing.textContent = `🤖 Gemini thinks: "${data.guess}"`;
+      guessing.style.color = '#00ffaa';
+    });
+
+    socket.on('guess_feedback', data => {
+      const feedback = document.getElementById('feedback');
+      if (data.result === 'correct') {
+        feedback.textContent = '👍 You confirmed the guess is correct!';
+        feedback.style.color = '#00ff88';
+        feedback.style.borderLeftColor = '#00ff88';
+      } else {
+        feedback.textContent = '👎 You said the guess is incorrect.';
+        feedback.style.color = '#ff5555';
+        feedback.style.borderLeftColor = '#ff5555';
+      }
+    });
+  </script>
+</body>
+</html>
