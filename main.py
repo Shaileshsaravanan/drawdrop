@@ -139,7 +139,6 @@ def generate_frames():
                 socketio.start_background_task(handle_gemini_guess, canvas.copy())
 
             if is_thumbs_up(landmarks):
-                # Clear the current drawing
                 canvas = np.zeros_like(frame)
                 drawing_points.clear()
                 socketio.emit('guess_feedback', {'result': 'correct', 'guess': last_guess})
